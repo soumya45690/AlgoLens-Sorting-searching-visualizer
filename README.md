@@ -1,12 +1,56 @@
-# Sorting & Searching Visualizer — Light Theme v2
+# AlgoLens - Sorting and Searching Visualizer
 
-Default array has five values. Random array generates five values. Stop halts an animation in the middle. Controls use a consistent responsive grid and complexity labels wrap inside their card.
+AlgoLens is an interactive web application designed to help students understand sorting and searching algorithms through step-by-step visualizations.
 
-Run on Windows:
-```powershell
-python -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
-python app.py
+## Features
+
+- Generate random arrays.
+- Choose an algorithm to visualize.
+- Control the animation speed.
+- Observe how elements are compared, swapped, and arranged.
+- View algorithm code and time and space complexity.
+
+## Technologies Used
+
+- Python
+- Flask
+- HTML
+- CSS
+- JavaScript
+
+## Project Structure
+
+```text
+sorting_searching_visualizer_python/
+├── static/
+│   ├── script.js
+│   └── styles.css
+├── templates/
+│   └── index.html
+├── app.py
+├── requirements.txt
+├── README.md
+└── .gitignore
 ```
-Open http://127.0.0.1:5000.
+
+## Installation and Setup
+
+1. Clone the repository.
+2. Create and activate a Python virtual environment.
+3. Install the required dependencies:
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. Run the application:
+
+   ```bash
+   python app.py
+   ```
+
+5. Open the local address displayed in your terminal.
+
+## Purpose
+
+The project aims to make learning sorting and searching algorithms easier through interactive visual demonstrations.
