@@ -1,0 +1,1801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SortLab | Algorithm Visualizer</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Space+Grotesk:wght@300..700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+
+    <style>
+        .workspace-sortlab {
+            display: grid !important;
+            grid-template-columns: minmax(0, 1.35fr) minmax(280px, 1fr);
+            align-items: stretch;
+            gap: 20px;
+        }
+        .workspace-sortlab > .visual-panel,
+        .workspace-sortlab > .current-action-panel {
+            min-width: 0; width: 100%; box-sizing: border-box;
+        }
+        .current-action-panel {
+            min-height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        .current-action-content {
+            margin-top: 18px;
+            padding: 22px;
+            border: 1px solid #dcdcff;
+            border-radius: 14px;
+            background: #f8f7ff;
+            flex: 1;
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: flex-start;
+            gap: 14px;
+            overflow-wrap: anywhere;
+        }
+        .current-action-content h4 { margin: 0; font-size: 1.05rem; color: #242b45; }
+        .current-action-content p { margin: 0; color: #68728e; line-height: 1.65; font-size: .95rem; }
+        .current-action-content .step-tag { margin-top: 2px; }
+        @media (max-width: 850px) {
+            .workspace-sortlab { grid-template-columns: minmax(0, 1fr); }
+            .current-action-content { min-height: 170px; }
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <!-- TOPBAR -->
+    <header class="topbar">
+        <div class="brand">
+            <div class="brand-icon">S</div>
+            <div>
+                <h1>SortLab</h1>
+                <p>DSA Interactive Lab · Sorting & Searching</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <span class="header-badge">
+                <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                LEARN · VISUALIZE · UNDERSTAND
+            </span>
+        </div>
+    </header>
+
+    <main class="page-container">
+
+      
+        <!-- PAGE HEADING -->
+        <section class="page-heading">
+            <div>
+                <p class="eyebrow">DATA STRUCTURES & ALGORITHMS</p>
+                <h2>Sorting & Searching Visualizer</h2>
+                <p class="subtitle">
+                    Watch algorithms execute step-by-step and understand every comparison, swap, and memory operation.
+                </p>
+            </div>
+
+            <div id="statusPill" class="status-pill">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                Ready to run
+            </div>
+        </section>
+
+        <!-- CONTROL PANEL -->
+        <section class="control-panel">
+            <div class="control-group array-control">
+                <label for="arrayInput">
+                    <span>Input Array</span>
+                    <span class="helper-tip">Comma or space separated (2-50 items)</span>
+                </label>
+                <input
+                    type="text"
+                    id="arrayInput"
+                    value="45, 12, 78, 23, 9"
+                    placeholder="e.g. 45, 12, 78, 23, 9"
+                >
+            </div>
+
+            <div class="control-group">
+                <label for="algorithmSelect">Algorithm</label>
+                <select id="algorithmSelect">
+                    <option value="bubble">Bubble Sort</option>
+                    <option value="selection">Selection Sort</option>
+                    <option value="insertion">Insertion Sort</option>
+                    <option value="merge">Merge Sort</option>
+                    <option value="quick">Quick Sort</option>
+                    <option value="counting">Counting Sort</option>
+                    <option value="linear">Linear Search</option>
+                    <option value="binary">Binary Search</option>
+                </select>
+            </div>
+
+            <div class="control-group" id="targetGroup" hidden>
+                <label for="targetInput">Search Target</label>
+                <input
+                    type="number"
+                    id="targetInput"
+                    value="23"
+                    placeholder="Enter target"
+                >
+            </div>
+
+            <div class="control-group">
+                <label for="speedSelect">Animation Speed</label>
+                <select id="speedSelect">
+                    <option value="slow">Slow (1.1s)</option>
+                    <option value="normal" selected>Normal (550ms)</option>
+                    <option value="fast">Fast (180ms)</option>
+                    <option value="instant">Ultra Fast (50ms)</option>
+                </select>
+            </div>
+
+            <!-- Quick Presets -->
+            <div class="w-full flex items-center gap-2 flex-wrap text-xs text-gray-500">
+                <span class="font-semibold text-gray-600">Quick Arrays:</span>
+                <button type="button" class="preset-btn" onclick="setPreset([45, 12, 78, 23, 9])">Default (5)</button>
+                <button type="button" class="preset-btn" onclick="setPreset([64, 34, 25, 12, 22, 11, 90])">Classic (7)</button>
+                <button type="button" class="preset-btn" onclick="setPreset([88, 70, 61, 55, 42, 30, 20, 10])">Reversed (8)</button>
+                <button type="button" class="preset-btn" onclick="setPreset([5, 14, 23, 32, 41, 50, 62, 75, 88])">Nearly Sorted</button>
+                <button type="button" class="preset-btn" onclick="setPreset([12, 4, 12, 8, 4, 15, 8, 12])">Duplicates</button>
+            </div>
+
+            <div class="control-buttons">
+                <button id="randomBtn" class="button secondary">
+                    🎲 Generate Random Array
+                </button>
+
+                <button id="runBtn" class="button primary">
+                    ▶ Run Algorithm
+                </button>
+
+                <button id="stopBtn" class="button danger" disabled>
+                    ■ Stop
+                </button>
+            </div>
+        </section>
+
+        <!-- ALGORITHM PROCESS & HOW IT WORKS GUIDE -->
+        <section class="algo-guide-panel panel" id="algoGuidePanel">
+            <div class="guide-header">
+                <div class="flex items-center gap-3">
+                    <div class="guide-icon" id="guideIcon">🫧</div>
+                    <div>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <p class="eyebrow" style="margin-bottom: 0;">ALGORITHM LOGIC & HOW IT WORKS</p>
+                            <span class="badge-mini" id="guideCategoryBadge">Comparison Sort · In-Place</span>
+                        </div>
+                        <h3 id="guideTitle" class="guide-heading">Bubble Sort: How It Works</h3>
+                    </div>
+                </div>
+                <button type="button" class="guide-toggle-btn" id="guideToggleBtn" onclick="toggleGuide()">
+                    <span id="guideToggleText">Hide Process</span>
+                    <span id="guideToggleArrow">▲</span>
+                </button>
+            </div>
+
+            <div id="guideBody" class="guide-body">
+                <p class="guide-desc" id="guideDescription">
+                    Bubble Sort repeatedly steps through the list, compares <strong>adjacent elements</strong>, and swaps them if they are in the wrong order. With each pass through the array, the largest remaining unsorted value "bubbles up" to its final position at the end of the list.
+                </p>
+
+                <!-- 4 Step Process Cards -->
+                <div class="guide-steps-grid" id="guideStepsGrid">
+                    <!-- Populated dynamically by updateAlgorithmGuide -->
+                </div>
+
+                <!-- Invariant & Rule Callout -->
+                <div class="guide-callout" id="guideCallout">
+                    <div class="flex items-center justify-between flex-wrap gap-2">
+                        <div class="flex items-center gap-2">
+                            <span class="text-base">💡</span>
+                            <span class="text-xs font-bold text-gray-700 uppercase tracking-wide">Core Decision Rule / Invariant:</span>
+                        </div>
+                        <span id="guideComplexityBadge" class="text-xs font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">O(n²) Average</span>
+                    </div>
+                    <code id="guideRuleCode" class="guide-rule-code">if (arr[j] > arr[j + 1]) swap(arr[j], arr[j + 1]);</code>
+                    <p id="guideRuleExplanation" class="text-xs text-gray-600 mt-1 mb-0">
+                        Comparing adjacent pairs: If the left element is strictly greater than the right element, their order is inverted, requiring an immediate swap.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- WORKSPACE: visualization on the left, one live step on the right -->
+        <section class="workspace workspace-sortlab">
+
+            <!-- VISUALIZATION -->
+            <section class="visual-panel panel">
+                <div class="panel-heading">
+                    <div>
+                        <p class="eyebrow">LIVE EXECUTION</p>
+                        <h3>Algorithm Visualization</h3>
+                    </div>
+                    <span class="live-indicator">
+                        <span class="live-dot"></span>
+                        Live
+                    </span>
+                </div>
+
+                <div id="stepNotify" class="step-notification">
+                    Choose an algorithm and click Run Algorithm.
+                </div>
+
+                <div id="barsContainer" class="bars-container"></div>
+
+                <div class="legend">
+                    <span><i class="legend-box default-color"></i> Unprocessed</span>
+                    <span><i class="legend-box compare-color"></i> Comparing</span>
+                    <span><i class="legend-box swap-color"></i> Swapping / Active</span>
+                    <span><i class="legend-box sorted-color"></i> Sorted / Found</span>
+                </div>
+
+                <div class="array-summary">
+                    <h4>Current Array</h4>
+                    <div id="arrayDisplay" class="array-display"></div>
+                </div>
+            </section>
+
+            <!-- RIGHT SIDE: ONLY THE CURRENT COMPARISON / ACTION -->
+            <section class="current-action-panel panel">
+                <div class="panel-heading">
+                    <div>
+                        <p class="eyebrow">CURRENT ACTION</p>
+                        <h3>What is happening now?</h3>
+                    </div>
+                    <span id="currentActionBadge" class="step-counter">Ready</span>
+                </div>
+                <div id="currentActionContent" class="current-action-content">
+                    <div class="empty-icon">↳</div>
+                    <h4>Preparing execution</h4>
+                    <p>Run an algorithm to see the current comparison, swap, or decision here.</p>
+                </div>
+            </section>
+        </section>
+
+        <!-- Hidden compatibility elements used by the existing JavaScript -->
+        <div id="stepHistory" hidden></div>
+        <span id="stepCounter" hidden>0 steps</span>
+
+        <!-- CODE PANEL -->
+        <section class="code-panel panel relative">
+            <div class="panel-heading">
+                <div>
+                    <p class="eyebrow">UNDER THE HOOD</p>
+                    <h3>Algorithm Implementations</h3>
+                </div>
+            </div>
+
+            <p class="subtitle">
+                Compare how the selected algorithm is structured in Python, Java, and C++.
+            </p>
+
+            <div class="code-tabs">
+                <button type="button" class="code-tab-btn active" onclick="switchLanguageTab('all')">All Languages</button>
+                <button type="button" class="code-tab-btn" onclick="switchLanguageTab('python')">Python</button>
+                <button type="button" class="code-tab-btn" onclick="switchLanguageTab('java')">Java</button>
+                <button type="button" class="code-tab-btn" onclick="switchLanguageTab('cpp')">C++</button>
+            </div>
+
+            <div class="relative">
+                <button type="button" class="copy-code-btn" id="copyCodeBtn" onclick="copyCurrentCode()">
+                    📋 Copy Code
+                </button>
+                <pre id="codeOutput" class="code-output">Run an algorithm to see its implementations in Python, Java, and C++.</pre>
+            </div>
+        </section>
+
+        <!-- COMPLEXITY PANEL -->
+        <section class="complexity-panel panel">
+            <div class="panel-heading">
+                <div>
+                    <p class="eyebrow">PERFORMANCE ANALYSIS</p>
+                    <h3>Complexity Analysis</h3>
+                </div>
+            </div>
+
+            <div class="complexity-grid">
+                <div class="complexity-card">
+                    <span>Time Complexity</span>
+                    <strong id="timeOutput">—</strong>
+                </div>
+
+                <div class="complexity-card">
+                    <span>Space Complexity</span>
+                    <strong id="spaceOutput">—</strong>
+                </div>
+            </div>
+
+            <p id="complexityNote" class="complexity-note">
+                Run an algorithm to see its complexity.
+            </p>
+        </section>
+
+    </main>
+
+    <footer class="footer">
+        SortLab · Learn algorithms by watching them work. Interactive Data Structures & Algorithms Lab.
+    </footer>
+
+    <!-- INTERACTIVE ENGINE & FALLBACK JAVASCRIPT -->
+    <script>
+        const $ = (id) => document.getElementById(id);
+
+        const arrayInput = $("arrayInput");
+        const algorithmSelect = $("algorithmSelect");
+        const targetInput = $("targetInput");
+        const targetGroup = $("targetGroup");
+        const speedSelect = $("speedSelect");
+
+        const randomBtn = $("randomBtn");
+        const runBtn = $("runBtn");
+        const stopBtn = $("stopBtn");
+
+        const barsContainer = $("barsContainer");
+        const stepNotify = $("stepNotify");
+        const statusPill = $("statusPill");
+        const arrayDisplay = $("arrayDisplay");
+        const stepHistory = $("stepHistory");
+        const stepCounter = $("stepCounter");
+
+        const codeOutput = $("codeOutput");
+        const timeOutput = $("timeOutput");
+        const spaceOutput = $("spaceOutput");
+        const complexityNote = $("complexityNote");
+
+        let currentArray = [];
+        let isRunning = false;
+        let stopRequested = false;
+        let runId = 0;
+        let displayedSteps = 0;
+        let activeLangTab = "all";
+        let lastSnippets = { python: "", java: "", cpp: "" };
+
+        const SPEEDS = {
+            slow: 1100,
+            normal: 550,
+            fast: 180,
+            instant: 50
+        };
+
+        const ALGORITHM_NAMES = {
+            bubble: "Bubble Sort",
+            selection: "Selection Sort",
+            insertion: "Insertion Sort",
+            merge: "Merge Sort",
+            quick: "Quick Sort",
+            counting: "Counting Sort",
+            linear: "Linear Search",
+            binary: "Binary Search"
+        };
+
+        // Complete Local Implementations for full standalone and fallback capability
+        const PYTHON_SNIPPETS = {
+            bubble: `def bubble_sort(arr):
+    for i in range(len(arr)):
+        swapped = False
+        for j in range(len(arr) - i - 1):
+            if arr[j] > arr[j + 1]:
+                arr[j], arr[j + 1] = arr[j + 1], arr[j]
+                swapped = True
+        if not swapped:
+            break
+    return arr`,
+
+            selection: `def selection_sort(arr):
+    for i in range(len(arr) - 1):
+        minimum = i
+        for j in range(i + 1, len(arr)):
+            if arr[j] < arr[minimum]:
+                minimum = j
+        arr[i], arr[minimum] = arr[minimum], arr[i]
+    return arr`,
+
+            insertion: `def insertion_sort(arr):
+    for i in range(1, len(arr)):
+        key = arr[i]
+        j = i - 1
+        while j >= 0 and arr[j] > key:
+            arr[j + 1] = arr[j]
+            j -= 1
+        arr[j + 1] = key
+    return arr`,
+
+            merge: `def merge_sort(arr):
+    if len(arr) <= 1:
+        return arr
+
+    mid = len(arr) // 2
+    left = merge_sort(arr[:mid])
+    right = merge_sort(arr[mid:])
+
+    result = []
+    i = j = 0
+
+    while i < len(left) and j < len(right):
+        if left[i] <= right[j]:
+            result.append(left[i])
+            i += 1
+        else:
+            result.append(right[j])
+            j += 1
+
+    return result + left[i:] + right[j:]`,
+
+            quick: `def quick_sort(arr):
+    if len(arr) <= 1:
+        return arr
+
+    pivot = arr[-1]
+    left = [x for x in arr[:-1] if x <= pivot]
+    right = [x for x in arr[:-1] if x > pivot]
+
+    return quick_sort(left) + [pivot] + quick_sort(right)`,
+
+            counting: `def counting_sort(arr):
+    if not arr:
+        return []
+
+    low, high = min(arr), max(arr)
+    count = [0] * (high - low + 1)
+
+    for value in arr:
+        count[value - low] += 1
+
+    result = []
+    for i, frequency in enumerate(count):
+        result.extend([i + low] * frequency)
+
+    return result`,
+
+            linear: `def linear_search(arr, target):
+    for index, value in enumerate(arr):
+        if value == target:
+            return index
+    return -1`,
+
+            binary: `def binary_search(arr, target):
+    arr = sorted(arr)
+    left, right = 0, len(arr) - 1
+
+    while left <= right:
+        mid = (left + right) // 2
+
+        if arr[mid] == target:
+            return mid
+        elif arr[mid] < target:
+            left = mid + 1
+        else:
+            right = mid - 1
+
+    return -1`
+        };
+
+        const JAVA_SNIPPETS = {
+            bubble: `static void bubbleSort(int[] arr) {
+    for (int i = 0; i < arr.length; i++) {
+        boolean swapped = false;
+
+        for (int j = 0; j < arr.length - i - 1; j++) {
+            if (arr[j] > arr[j + 1]) {
+                int temp = arr[j];
+                arr[j] = arr[j + 1];
+                arr[j + 1] = temp;
+                swapped = true;
+            }
+        }
+
+        if (!swapped) break;
+    }
+}`,
+            selection: `static void selectionSort(int[] arr) {
+    for (int i = 0; i < arr.length - 1; i++) {
+        int min = i;
+
+        for (int j = i + 1; j < arr.length; j++) {
+            if (arr[j] < arr[min]) min = j;
+        }
+
+        int temp = arr[i];
+        arr[i] = arr[min];
+        arr[min] = temp;
+    }
+}`,
+            insertion: `static void insertionSort(int[] arr) {
+    for (int i = 1; i < arr.length; i++) {
+        int key = arr[i];
+        int j = i - 1;
+
+        while (j >= 0 && arr[j] > key) {
+            arr[j + 1] = arr[j];
+            j--;
+        }
+
+        arr[j + 1] = key;
+    }
+}`,
+            merge: `static void mergeSort(int[] arr, int left, int right) {
+    if (left >= right) return;
+
+    int mid = left + (right - left) / 2;
+
+    mergeSort(arr, left, mid);
+    mergeSort(arr, mid + 1, right);
+
+    int[] temp = new int[right - left + 1];
+    int i = left, j = mid + 1, k = 0;
+
+    while (i <= mid && j <= right) {
+        temp[k++] = arr[i] <= arr[j] ? arr[i++] : arr[j++];
+    }
+
+    while (i <= mid) temp[k++] = arr[i++];
+    while (j <= right) temp[k++] = arr[j++];
+
+    System.arraycopy(temp, 0, arr, left, temp.length);
+}`,
+            quick: `static void quickSort(int[] arr, int low, int high) {
+    if (low >= high) return;
+
+    int pivot = arr[high];
+    int i = low;
+
+    for (int j = low; j < high; j++) {
+        if (arr[j] <= pivot) {
+            int temp = arr[i];
+            arr[i++] = arr[j];
+            arr[j] = temp;
+        }
+    }
+
+    int temp = arr[i];
+    arr[i] = arr[high];
+    arr[high] = temp;
+
+    quickSort(arr, low, i - 1);
+    quickSort(arr, i + 1, high);
+}`,
+            counting: `static int[] countingSort(int[] arr) {
+    if (arr.length == 0) return arr;
+
+    int min = arr[0], max = arr[0];
+    for (int value : arr) {
+        min = Math.min(min, value);
+        max = Math.max(max, value);
+    }
+
+    int[] count = new int[max - min + 1];
+    for (int value : arr) count[value - min]++;
+
+    int index = 0;
+    for (int i = 0; i < count.length; i++) {
+        while (count[i]-- > 0) arr[index++] = i + min;
+    }
+
+    return arr;
+}`,
+            linear: `static int linearSearch(int[] arr, int target) {
+    for (int i = 0; i < arr.length; i++) {
+        if (arr[i] == target) return i;
+    }
+    return -1;
+}`,
+            binary: `static int binarySearch(int[] arr, int target) {
+    int[] sorted = arr.clone();
+    Arrays.sort(sorted);
+
+    int left = 0, right = sorted.length - 1;
+
+    while (left <= right) {
+        int mid = left + (right - left) / 2;
+
+        if (sorted[mid] == target) return mid;
+        if (sorted[mid] < target) left = mid + 1;
+        else right = mid - 1;
+    }
+
+    return -1;
+}`
+        };
+
+        const CPP_SNIPPETS = {
+            bubble: `void bubbleSort(vector<int>& arr) {
+    int n = arr.size();
+    for (int i = 0; i < n; i++) {
+        bool swapped = false;
+        for (int j = 0; j < n - i - 1; j++) {
+            if (arr[j] > arr[j + 1]) {
+                swap(arr[j], arr[j + 1]);
+                swapped = true;
+            }
+        }
+        if (!swapped) break;
+    }
+}`,
+            selection: `void selectionSort(vector<int>& arr) {
+    int n = arr.size();
+    for (int i = 0; i < n - 1; i++) {
+        int minIndex = i;
+        for (int j = i + 1; j < n; j++) {
+            if (arr[j] < arr[minIndex]) minIndex = j;
+        }
+        swap(arr[i], arr[minIndex]);
+    }
+}`,
+            insertion: `void insertionSort(vector<int>& arr) {
+    for (int i = 1; i < arr.size(); i++) {
+        int key = arr[i];
+        int j = i - 1;
+        while (j >= 0 && arr[j] > key) {
+            arr[j + 1] = arr[j];
+            j--;
+        }
+        arr[j + 1] = key;
+    }
+}`,
+            merge: `void mergeSort(vector<int>& arr, int left, int right) {
+    if (left >= right) return;
+
+    int mid = left + (right - left) / 2;
+    mergeSort(arr, left, mid);
+    mergeSort(arr, mid + 1, right);
+
+    vector<int> temp;
+    int i = left, j = mid + 1;
+
+    while (i <= mid && j <= right) {
+        if (arr[i] <= arr[j]) temp.push_back(arr[i++]);
+        else temp.push_back(arr[j++]);
+    }
+
+    while (i <= mid) temp.push_back(arr[i++]);
+    while (j <= right) temp.push_back(arr[j++]);
+
+    for (int k = 0; k < temp.size(); k++) {
+        arr[left + k] = temp[k];
+    }
+}`,
+            quick: `void quickSort(vector<int>& arr, int low, int high) {
+    if (low >= high) return;
+
+    int pivot = arr[high];
+    int i = low;
+
+    for (int j = low; j < high; j++) {
+        if (arr[j] <= pivot) {
+            swap(arr[i], arr[j]);
+            i++;
+        }
+    }
+
+    swap(arr[i], arr[high]);
+    quickSort(arr, low, i - 1);
+    quickSort(arr, i + 1, high);
+}`,
+            counting: `vector<int> countingSort(vector<int> arr) {
+    if (arr.empty()) return arr;
+
+    int low = *min_element(arr.begin(), arr.end());
+    int high = *max_element(arr.begin(), arr.end());
+
+    vector<int> count(high - low + 1, 0);
+    for (int value : arr) count[value - low]++;
+
+    int index = 0;
+    for (int i = 0; i < count.size(); i++) {
+        while (count[i]-- > 0) arr[index++] = i + low;
+    }
+
+    return arr;
+}`,
+            linear: `int linearSearch(const vector<int>& arr, int target) {
+    for (int i = 0; i < arr.size(); i++) {
+        if (arr[i] == target) return i;
+    }
+    return -1;
+}`,
+            binary: `int binarySearch(vector<int> arr, int target) {
+    sort(arr.begin(), arr.end());
+
+    int left = 0, right = arr.size() - 1;
+
+    while (left <= right) {
+        int mid = left + (right - left) / 2;
+
+        if (arr[mid] == target) return mid;
+        if (arr[mid] < target) left = mid + 1;
+        else right = mid - 1;
+    }
+
+    return -1;
+}`
+        };
+
+        const COMPLEXITIES = {
+            bubble: { time: "Average/worst: O(n²); best: O(n)", space: "O(1)" },
+            selection: { time: "O(n²)", space: "O(1)" },
+            insertion: { time: "Average/worst: O(n²); best: O(n)", space: "O(1)" },
+            merge: { time: "O(n log n)", space: "O(n)" },
+            quick: { time: "Average: O(n log n); worst: O(n²)", space: "Average: O(log n) recursion" },
+            counting: { time: "O(n + k)", space: "O(n + k)" },
+            linear: { time: "Best: O(1); worst: O(n)", space: "O(1)" },
+            binary: { time: "Search: O(log n); incl. sorting: O(n log n)", space: "O(1) extra for search" }
+        };
+
+        // --------------------------------------------------
+        // ARRAY INPUT PARSER
+        // --------------------------------------------------
+        function parseArray() {
+            const raw = arrayInput.value.trim();
+            if (!raw) {
+                throw new Error("Please enter some numbers.");
+            }
+
+            const parts = raw.split(/[\s,]+/).filter(Boolean);
+            if (parts.length < 2 || parts.length > 50) {
+                throw new Error("Enter between 2 and 50 numbers.");
+            }
+
+            const values = parts.map((part) => {
+                if (!/^-?\d+$/.test(part)) {
+                    throw new Error(`"${part}" is not a valid integer.`);
+                }
+                const number = Number(part);
+                if (!Number.isSafeInteger(number)) {
+                    throw new Error("Please enter safe integer values.");
+                }
+                return number;
+            });
+
+            return values;
+        }
+
+        function setPreset(arr) {
+            if (isRunning) return;
+            arrayInput.value = arr.join(", ");
+            currentArray = [...arr];
+            drawBars(currentArray);
+            resetResults();
+            setStatus("Ready");
+            stepNotify.textContent = `Preset loaded: [${arr.join(", ")}]. Click "Run Algorithm".`;
+        }
+
+        // --------------------------------------------------
+        // STATUS PILL
+        // --------------------------------------------------
+        function setStatus(message, type = "ready") {
+            statusPill.textContent = message;
+            statusPill.className = "status-pill";
+
+            if (type === "running") {
+                statusPill.classList.add("running");
+                statusPill.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span> ${message}`;
+            } else if (type === "error") {
+                statusPill.classList.add("error");
+                statusPill.innerHTML = `<span class="w-2 h-2 rounded-full bg-rose-500"></span> ${message}`;
+            } else {
+                statusPill.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span> ${message}`;
+            }
+        }
+
+        function setBusy(busy) {
+            isRunning = busy;
+            runBtn.disabled = busy;
+            randomBtn.disabled = busy;
+            algorithmSelect.disabled = busy;
+            arrayInput.disabled = busy;
+            targetInput.disabled = busy;
+            speedSelect.disabled = busy;
+            stopBtn.disabled = !busy;
+        }
+
+        // --------------------------------------------------
+        // DRAW THE ARRAY BARS
+        // --------------------------------------------------
+        function drawBars(values, highlights = [], kind = "none") {
+            barsContainer.innerHTML = "";
+
+            if (!Array.isArray(values) || values.length === 0) {
+                arrayDisplay.innerHTML = "";
+                return;
+            }
+
+            const maxValue = Math.max(...values);
+            const minValue = Math.min(...values);
+            const largestMagnitude = Math.max(Math.abs(maxValue), Math.abs(minValue), 1);
+            const maxHeight = 210;
+
+            values.forEach((value, index) => {
+                const item = document.createElement("div");
+                item.className = "bar-item";
+
+                const label = document.createElement("div");
+                label.className = "bar-value";
+                label.textContent = value;
+
+                const bar = document.createElement("div");
+                bar.className = "bar";
+
+                const height = Math.max(8, (Math.abs(value) / largestMagnitude) * maxHeight);
+                bar.style.height = `${height}px`;
+                bar.title = `Index ${index}: ${value}`;
+
+                if (highlights.includes(index)) {
+                    if (kind === "swap") {
+                        bar.classList.add("swap");
+                    } else if (kind === "sorted" || kind === "found") {
+                        bar.classList.add("sorted");
+                    } else {
+                        bar.classList.add("compare");
+                    }
+                }
+
+                const indexLabel = document.createElement("div");
+                indexLabel.className = "bar-index";
+                indexLabel.textContent = index;
+
+                item.appendChild(label);
+                item.appendChild(bar);
+                item.appendChild(indexLabel);
+
+                barsContainer.appendChild(item);
+            });
+
+            renderArray(values, highlights, kind);
+        }
+
+        // --------------------------------------------------
+        // DISPLAY ARRAY AS NUMBER CHIPS
+        // --------------------------------------------------
+        function renderArray(values, highlights = [], kind = "none") {
+            arrayDisplay.innerHTML = "";
+
+            values.forEach((value, index) => {
+                const chip = document.createElement("div");
+                chip.className = "array-chip";
+                chip.textContent = value;
+
+                if (highlights.includes(index)) {
+                    if (kind === "sorted" || kind === "found") {
+                        chip.style.background = "#e1f8ef";
+                        chip.style.borderColor = "#24b887";
+                        chip.style.color = "#0e6b4e";
+                    } else if (kind === "swap") {
+                        chip.style.background = "#ffe8ec";
+                        chip.style.borderColor = "#df5268";
+                        chip.style.color = "#b01f37";
+                    } else {
+                        chip.style.background = "#fff2dc";
+                        chip.style.borderColor = "#e89a36";
+                        chip.style.color = "#8b5608";
+                    }
+                }
+
+                arrayDisplay.appendChild(chip);
+            });
+        }
+
+        // --------------------------------------------------
+        // STEP-BY-STEP EXPLANATION
+        // --------------------------------------------------
+        function resetStepHistory() {
+            displayedSteps = 0;
+            stepCounter.textContent = "0 steps";
+            const currentActionContent = document.getElementById("currentActionContent");
+            const currentActionBadge = document.getElementById("currentActionBadge");
+            if (currentActionBadge) currentActionBadge.textContent = "Ready";
+            if (currentActionContent) currentActionContent.innerHTML = '<div class="empty-icon">↳</div><h4>Preparing execution</h4><p>Run an algorithm to see the current comparison, swap, or decision here.</p>';
+            stepHistory.innerHTML = `
+                <div class="empty-steps">
+                    <div class="empty-icon">↳</div>
+                    <h4>Preparing execution</h4>
+                    <p>
+                        Step-by-step explanations will appear here as the algorithm executes.
+                    </p>
+                </div>
+            `;
+        }
+
+        function getStepTitle(step, index) {
+            const kind = String(step.kind || "none").toLowerCase();
+            const message = String(step.message || "").toLowerCase();
+
+            if (message.includes("found") || message.includes("not found")) {
+                return "Search Result";
+            }
+            if (kind === "found") return "Target Found";
+            if (kind === "swap") return "Swap / Update";
+            if (kind === "sorted") return "Sorted / Completed";
+            if (message.includes("compare")) return "Compare Elements";
+            if (message.includes("pivot")) return "Pivot Operation";
+            if (message.includes("merge")) return "Merge Operation";
+            if (message.includes("search")) return "Search Operation";
+            if (message.includes("complete")) return "Algorithm Completed";
+
+            return `Execution Step ${index + 1}`;
+        }
+
+        function addStepCard(step, index) {
+            // The full-width trace below the visualization shows the current step.
+            // Mirror the same step into the compact current-action card on the right.
+            stepHistory.innerHTML = "";
+            displayedSteps++;
+            stepCounter.textContent = `${displayedSteps} step${displayedSteps === 1 ? "" : "s"}`;
+
+            const card = document.createElement("article");
+            card.className = "step-card current";
+
+            const number = document.createElement("div");
+            number.className = "step-number";
+            number.textContent = displayedSteps;
+
+            const content = document.createElement("div");
+            content.className = "step-content";
+
+            const title = document.createElement("h4");
+            title.textContent = getStepTitle(step, index);
+
+            const explanation = document.createElement("p");
+            explanation.textContent = step.message || "The algorithm is processing the current state.";
+
+            const tag = document.createElement("span");
+            tag.className = "step-tag";
+            tag.textContent = step.kind || "processing";
+
+            content.appendChild(title);
+            content.appendChild(explanation);
+            content.appendChild(tag);
+
+            card.appendChild(number);
+            card.appendChild(content);
+
+            stepHistory.appendChild(card);
+
+            const currentActionContent = document.getElementById("currentActionContent");
+            const currentActionBadge = document.getElementById("currentActionBadge");
+            if (currentActionContent) {
+                currentActionContent.innerHTML = "";
+                const actionTitle = document.createElement("h4");
+                actionTitle.textContent = title.textContent;
+                const actionMessage = document.createElement("p");
+                actionMessage.textContent = explanation.textContent;
+                const actionTag = document.createElement("span");
+                actionTag.className = "step-tag";
+                actionTag.textContent = tag.textContent;
+                currentActionContent.append(actionTitle, actionMessage, actionTag);
+            }
+            if (currentActionBadge) currentActionBadge.textContent = `Step ${displayedSteps}`;
+        }
+
+        function addFinalStep(message) {
+            addStepCard({ message: message, kind: "completed" }, displayedSteps);
+        }
+
+        function wait(milliseconds, thisRunId) {
+            return new Promise((resolve) => {
+                const startedAt = Date.now();
+                function check() {
+                    if (stopRequested || thisRunId !== runId) {
+                        resolve(false);
+                        return;
+                    }
+                    if (Date.now() - startedAt >= milliseconds) {
+                        resolve(true);
+                        return;
+                    }
+                    setTimeout(check, 20);
+                }
+                check();
+            });
+        }
+
+        function stopRun() {
+            if (!isRunning) return;
+            stopRequested = true;
+            setStatus("Stopping...", "running");
+            stepNotify.textContent = "Stopping the animation...";
+        }
+
+        function updateTargetVisibility() {
+            const algorithm = algorithmSelect.value;
+            targetGroup.hidden = !["linear", "binary"].includes(algorithm);
+        }
+
+        function resetResults() {
+            resetStepHistory();
+            stepNotify.textContent = "Starting algorithm execution...";
+            codeOutput.textContent = "Your algorithm implementations will appear here after execution.";
+            timeOutput.textContent = "—";
+            spaceOutput.textContent = "—";
+            complexityNote.textContent = "Complexity information will appear after execution.";
+        }
+
+        // --------------------------------------------------
+        // CLIENT-SIDE STEP GENERATOR (Stand-alone Engine)
+        // --------------------------------------------------
+        function generateLocalSteps(values, algorithm, target) {
+            const steps = [];
+            const a = [...values];
+
+            function record(arr, highlights = [], kind = "none", message = "") {
+                steps.push({
+                    array: [...arr],
+                    highlights: [...highlights],
+                    kind: kind,
+                    message: message
+                });
+            }
+
+            if (algorithm === "bubble") {
+                record(a, [], "none", "Starting Bubble Sort. Process: Repeatedly compare adjacent pairs (arr[j] & arr[j+1]) and swap if left > right.");
+                for (let i = 0; i < a.length; i++) {
+                    let swapped = false;
+                    for (let j = 0; j < a.length - i - 1; j++) {
+                        const leftVal = a[j];
+                        const rightVal = a[j + 1];
+                        if (leftVal > rightVal) {
+                            record(a, [j, j + 1], "compare", `Pass ${i + 1} · Compare adjacent arr[${j}]=${leftVal} and arr[${j + 1}]=${rightVal}. Since ${leftVal} > ${rightVal}, an inversion is detected.`);
+                            const temp = a[j];
+                            a[j] = a[j + 1];
+                            a[j + 1] = temp;
+                            swapped = true;
+                            record(a, [j, j + 1], "swap", `Pass ${i + 1} · Swap adjacent: Exchanged ${leftVal} and ${rightVal}. The larger number (${leftVal}) bubbles one step to the right.`);
+                        } else {
+                            record(a, [j, j + 1], "compare", `Pass ${i + 1} · Compare adjacent arr[${j}]=${leftVal} and arr[${j + 1}]=${rightVal}. Order is correct (${leftVal} <= ${rightVal}), no swap needed.`);
+                        }
+                    }
+                    record(a, [a.length - 1 - i], "sorted", `Pass ${i + 1} Settle: Element ${a[a.length - 1 - i]} at index ${a.length - 1 - i} has finished bubbling and is locked in its permanent sorted spot.`);
+                    if (!swapped) {
+                        record(a, a.map((_, idx) => idx), "sorted", `Early Exit Triggered: Pass ${i + 1} finished with 0 swaps! Array is completely sorted in O(n) time.`);
+                        break;
+                    }
+                }
+                record(a, a.map((_, i) => i), "sorted", "Bubble Sort completed! All elements sorted in ascending order.");
+            }
+            else if (algorithm === "selection") {
+                record(a, [], "none", "Starting Selection Sort. Process: Scan unsorted portion to find the absolute minimum value, then swap it to the front.");
+                for (let i = 0; i < a.length - 1; i++) {
+                    let min = i;
+                    record(a, [i], "compare", `Pass ${i + 1} · Set initial candidate minimum at index ${i} (value: ${a[i]}).`);
+                    for (let j = i + 1; j < a.length; j++) {
+                        record(a, [min, j], "compare", `Pass ${i + 1} · Scanning: Compare current minimum ${a[min]} (index ${min}) with arr[${j}]=${a[j]}.`);
+                        if (a[j] < a[min]) {
+                            min = j;
+                            record(a, [min], "compare", `Pass ${i + 1} · New Minimum: Found smaller element ${a[min]} at index ${min}.`);
+                        }
+                    }
+                    if (min !== i) {
+                        const temp = a[i];
+                        a[i] = a[min];
+                        a[min] = temp;
+                        record(a, [i, min], "swap", `Pass ${i + 1} · Swap: Move found minimum ${a[i]} from index ${min} to sorted index ${i}.`);
+                    } else {
+                        record(a, [i], "sorted", `Pass ${i + 1} · Element ${a[i]} is already the minimum for index ${i}. No swap needed.`);
+                    }
+                    record(a, [i], "sorted", `Index ${i} (value: ${a[i]}) is now permanently sorted.`);
+                }
+                record(a, a.map((_, i) => i), "sorted", "Selection Sort completed! All items positioned correctly.");
+            }
+            else if (algorithm === "insertion") {
+                record(a, [], "none", "Starting Insertion Sort. Process: Take the next key element and insert it backwards into its proper position among sorted items.");
+                for (let i = 1; i < a.length; i++) {
+                    const key = a[i];
+                    let j = i - 1;
+                    record(a, [i], "compare", `Step ${i} · Pick Key: Selected element ${key} at index ${i} to insert into the sorted region [0..${i - 1}].`);
+                    while (j >= 0 && a[j] > key) {
+                        record(a, [j, j + 1], "compare", `Comparing sorted element arr[${j}]=${a[j]} with key ${key}. Since ${a[j]} > ${key}, shift ${a[j]} one slot right.`);
+                        a[j + 1] = a[j];
+                        record(a, [j, j + 1], "swap", `Shifted ${a[j]} right to index ${j + 1} to create an opening for key ${key}.`);
+                        j--;
+                    }
+                    a[j + 1] = key;
+                    record(a, [j + 1], "found", `Inserted key ${key} into the vacant sorted position at index ${j + 1}.`);
+                }
+                record(a, a.map((_, i) => i), "sorted", "Insertion Sort completed! Array is now sorted.");
+            }
+            else if (algorithm === "merge") {
+                record(a, [], "none", "Starting Merge Sort.");
+                function mergeSortHelper(low, high) {
+                    if (high - low <= 1) return;
+                    const mid = Math.floor((low + high) / 2);
+                    mergeSortHelper(low, mid);
+                    mergeSortHelper(mid, high);
+
+                    const left = a.slice(low, mid);
+                    const right = a.slice(mid, high);
+                    let i = 0, j = 0, k = low;
+
+                    record(a, Array.from({ length: high - low }, (_, idx) => low + idx), "compare", `Merging subarrays [${left.join(", ")}] and [${right.join(", ")}].`);
+                    while (i < left.length && j < right.length) {
+                        if (left[i] <= right[j]) {
+                            a[k++] = left[i++];
+                        } else {
+                            a[k++] = right[j++];
+                        }
+                    }
+                    while (i < left.length) a[k++] = left[i++];
+                    while (j < right.length) a[k++] = right[j++];
+
+                    record(a, Array.from({ length: high - low }, (_, idx) => low + idx), "swap", `Merged elements back into positions ${low} to ${high - 1}.`);
+                }
+                mergeSortHelper(0, a.length);
+                record(a, a.map((_, i) => i), "sorted", "Merge Sort completed.");
+            }
+            else if (algorithm === "quick") {
+                record(a, [], "none", "Starting Quick Sort.");
+                function quickSortHelper(low, high) {
+                    if (low >= high) return;
+                    const pivot = a[high];
+                    let i = low;
+
+                    record(a, [high], "compare", `Chosen pivot is ${pivot} at index ${high}.`);
+                    for (let j = low; j < high; j++) {
+                        record(a, [j, high], "compare", `Compare ${a[j]} with pivot ${pivot}.`);
+                        if (a[j] <= pivot) {
+                            const t = a[i]; a[i] = a[j]; a[j] = t;
+                            record(a, [i, j], "swap", `Swapped ${a[j]} with ${a[i]} to move smaller element left.`);
+                            i++;
+                        }
+                    }
+                    const t = a[i]; a[i] = a[high]; a[high] = t;
+                    record(a, [i, high], "swap", `Placed pivot ${pivot} at its correct partition index ${i}.`);
+
+                    quickSortHelper(low, i - 1);
+                    quickSortHelper(i + 1, high);
+                }
+                quickSortHelper(0, a.length - 1);
+                record(a, a.map((_, i) => i), "sorted", "Quick Sort completed.");
+            }
+            else if (algorithm === "counting") {
+                record(a, [], "none", "Starting Counting Sort.");
+                const min = Math.min(...a);
+                const max = Math.max(...a);
+                const counts = new Array(max - min + 1).fill(0);
+
+                a.forEach(val => {
+                    counts[val - min]++;
+                    record(a, [], "none", `Tally frequency of value ${val}.`);
+                });
+
+                const output = [];
+                for (let offset = 0; offset < counts.length; offset++) {
+                    const val = offset + min;
+                    for (let c = 0; c < counts[offset]; c++) {
+                        output.push(val);
+                        const curr = [...output, ...a.slice(output.length)];
+                        record(curr, [output.length - 1], "swap", `Appended ${val} into sorted sequence.`);
+                    }
+                }
+                record(output, output.map((_, i) => i), "sorted", "Counting Sort completed.");
+            }
+            else if (algorithm === "linear") {
+                record(a, [], "none", `Searching for target ${target} using Linear Search.`);
+                let found = false;
+                for (let i = 0; i < a.length; i++) {
+                    record(a, [i], "compare", `Checking index ${i}: element is ${a[i]}.`);
+                    if (a[i] === target) {
+                        record(a, [i], "found", `Target ${target} found at index ${i}!`);
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    record(a, [], "none", `Target ${target} was not found in the array.`);
+                }
+            }
+            else if (algorithm === "binary") {
+                a.sort((x, y) => x - y);
+                record(a, [], "none", `Binary Search requires a sorted array. Sorted array: [${a.join(", ")}]. Searching for ${target}.`);
+                let left = 0, right = a.length - 1;
+                let found = false;
+
+                while (left <= right) {
+                    const mid = Math.floor((left + right) / 2);
+                    record(a, [mid], "compare", `Check middle index ${mid} (value: ${a[mid]}). Current range: [${left}..${right}].`);
+                    if (a[mid] === target) {
+                        record(a, [mid], "found", `Target ${target} found at sorted index ${mid}!`);
+                        found = true;
+                        break;
+                    }
+                    if (a[mid] < target) {
+                        left = mid + 1;
+                        record(a, [mid], "compare", `Target ${target} > ${a[mid]}; search right half [${left}..${right}].`);
+                    } else {
+                        right = mid - 1;
+                        record(a, [mid], "compare", `Target ${target} < ${a[mid]}; search left half [${left}..${right}].`);
+                    }
+                }
+                if (!found) {
+                    record(a, [], "none", `Target ${target} was not found in the array.`);
+                }
+            }
+
+            return steps;
+        }
+
+        // --------------------------------------------------
+        // CODE TAB SWITCHER
+        // --------------------------------------------------
+        function switchLanguageTab(lang) {
+            activeLangTab = lang;
+            document.querySelectorAll(".code-tab-btn").forEach(btn => btn.classList.remove("active"));
+            const targetBtn = Array.from(document.querySelectorAll(".code-tab-btn")).find(b => b.textContent.toLowerCase().includes(lang === "all" ? "all" : lang));
+            if (targetBtn) targetBtn.classList.add("active");
+
+            updateCodeOutputView();
+        }
+
+        function updateCodeOutputView() {
+            if (!lastSnippets.python) return;
+
+            if (activeLangTab === "python") {
+                codeOutput.textContent = `# PYTHON IMPLEMENTATION\n\n${lastSnippets.python}`;
+            } else if (activeLangTab === "java") {
+                codeOutput.textContent = `// JAVA IMPLEMENTATION\n\n${lastSnippets.java}`;
+            } else if (activeLangTab === "cpp") {
+                codeOutput.textContent = `// C++ IMPLEMENTATION\n\n${lastSnippets.cpp}`;
+            } else {
+                codeOutput.textContent =
+`# ==============================
+# PYTHON IMPLEMENTATION
+# ==============================
+${lastSnippets.python}
+
+// ==============================
+// JAVA IMPLEMENTATION
+// ==============================
+${lastSnippets.java}
+
+// ==============================
+// C++ IMPLEMENTATION
+// ==============================
+${lastSnippets.cpp}`;
+            }
+        }
+
+        function copyCurrentCode() {
+            const text = codeOutput.textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = $("copyCodeBtn");
+                btn.textContent = "✅ Copied!";
+                setTimeout(() => { btn.textContent = "📋 Copy Code"; }, 1500);
+            }).catch(() => {
+                alert("Code copied to clipboard!");
+            });
+        }
+
+        // --------------------------------------------------
+        // RUN THE ALGORITHM
+        // --------------------------------------------------
+        async function runAlgorithm() {
+            if (isRunning) return;
+
+            let values;
+            try {
+                values = parseArray();
+            } catch (error) {
+                setStatus("Invalid input", "error");
+                stepNotify.textContent = error.message;
+                return;
+            }
+
+            const algorithm = algorithmSelect.value;
+            const targetValue = targetInput.value.trim();
+
+            if (["linear", "binary"].includes(algorithm)) {
+                if (targetValue === "") {
+                    setStatus("Missing target", "error");
+                    stepNotify.textContent = "Please enter a target value to search for.";
+                    return;
+                }
+                if (!Number.isSafeInteger(Number(targetValue))) {
+                    setStatus("Invalid target", "error");
+                    stepNotify.textContent = "The search target must be a safe integer.";
+                    return;
+                }
+            }
+
+            runId++;
+            const thisRunId = runId;
+            stopRequested = false;
+
+            setBusy(true);
+            setStatus("Running", "running");
+            resetResults();
+
+            currentArray = [...values];
+            drawBars(currentArray);
+
+            // Populate code snippets & complexity
+            lastSnippets = {
+                python: PYTHON_SNIPPETS[algorithm] || "",
+                java: JAVA_SNIPPETS[algorithm] || "",
+                cpp: CPP_SNIPPETS[algorithm] || ""
+            };
+            updateCodeOutputView();
+
+            const comp = COMPLEXITIES[algorithm] || { time: "O(n²)", space: "O(1)" };
+            timeOutput.textContent = comp.time;
+            spaceOutput.textContent = comp.space;
+            complexityNote.textContent =
+                `Algorithm: ${ALGORITHM_NAMES[algorithm] || algorithm}. ` +
+                "Complexity describes how the algorithm's time and memory requirements grow with the input size.";
+
+            let steps = [];
+
+            // Try fetching from Flask backend first; fall back seamlessly to local engine
+            try {
+                const payload = { array: values, algorithm: algorithm };
+                if (["linear", "binary"].includes(algorithm)) {
+                    payload.target = Number(targetValue);
+                }
+
+                const response = await fetch("/api/run", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (Array.isArray(data.steps)) {
+                        steps = data.steps;
+                        if (data.time_complexity) timeOutput.textContent = data.time_complexity;
+                        if (data.space_complexity) spaceOutput.textContent = data.space_complexity;
+                    }
+                }
+            } catch (err) {
+                // Backend not connected or running statically: generate steps directly
+                console.info("Using built-in client algorithm engine.");
+            }
+
+            if (!steps || steps.length === 0) {
+                steps = generateLocalSteps(values, algorithm, Number(targetValue));
+            }
+
+            try {
+                for (let index = 0; index < steps.length; index++) {
+                    if (stopRequested || thisRunId !== runId) break;
+
+                    const step = steps[index];
+                    if (Array.isArray(step.array)) {
+                        currentArray = [...step.array];
+                        drawBars(currentArray, step.highlights || [], step.kind || "none");
+                    }
+
+                    const message = step.message || `Executing step ${index + 1}.`;
+                    stepNotify.textContent = message;
+                    addStepCard(step, index);
+
+                    const delay = SPEEDS[speedSelect.value] || SPEEDS.normal;
+                    const continued = await wait(delay, thisRunId);
+                    if (!continued) break;
+                }
+
+                if (thisRunId !== runId) return;
+
+                if (stopRequested) {
+                    setStatus("Stopped");
+                    stepNotify.textContent = "Execution stopped. The displayed array shows the last recorded state.";
+                    addFinalStep("Execution was stopped by the user.");
+                } else {
+                    setStatus("Completed");
+                    stepNotify.textContent = `${ALGORITHM_NAMES[algorithm]} execution completed.`;
+                    addFinalStep(
+                        `${ALGORITHM_NAMES[algorithm]} has finished executing. ` +
+                        "Review the steps above to understand how the algorithm progressed."
+                    );
+                }
+
+            } catch (error) {
+                if (thisRunId !== runId) return;
+                setStatus("Error", "error");
+                stepNotify.textContent = error.message;
+                addFinalStep(`Execution error: ${error.message}`);
+            } finally {
+                if (thisRunId === runId) {
+                    setBusy(false);
+                    stopRequested = false;
+                }
+            }
+        }
+
+        // --------------------------------------------------
+        // RANDOM ARRAY GENERATOR
+        // --------------------------------------------------
+        function generateRandomArray() {
+            if (isRunning) return;
+            const length = 7 + Math.floor(Math.random() * 5);
+            const values = [];
+            for (let i = 0; i < length; i++) {
+                values.push(5 + Math.floor(Math.random() * 95));
+            }
+
+            arrayInput.value = values.join(", ");
+            currentArray = [...values];
+            drawBars(currentArray);
+            resetResults();
+            stepNotify.textContent = "Random array generated. Select an algorithm and run it.";
+            setStatus("Ready");
+        }
+
+        // --------------------------------------------------
+        // ALGORITHM GUIDE DATA (What the algorithm is doing)
+        // --------------------------------------------------
+        const ALGO_GUIDE_DATA = {
+            bubble: {
+                title: "Bubble Sort: How It Works",
+                icon: "🫧",
+                category: "Comparison Sort · In-Place · Stable",
+                description: "Bubble Sort repeatedly passes through the list, comparing <strong>adjacent pairs</strong> of elements (<code>arr[j]</code> and <code>arr[j + 1]</code>). If an element on the left is larger than its neighbor on the right, they are swapped. With every pass, the largest unsorted value gradually \"bubbles up\" to its final sorted position at the end of the array.",
+                steps: [
+                    {
+                        num: "1",
+                        title: "Compare Adjacent Pairs",
+                        detail: "Inspect two neighbors at index <code>j</code> and <code>j + 1</code>. Only neighboring elements are compared at any one instant."
+                    },
+                    {
+                        num: "2",
+                        title: "Swap If Inverted",
+                        detail: "If <code>arr[j] > arr[j + 1]</code>, swap them immediately. This pushes the larger number toward the right."
+                    },
+                    {
+                        num: "3",
+                        title: "Lock Settle Position",
+                        detail: "After pass <code>i</code>, the element at index <code>n - 1 - i</code> is guaranteed to be in its permanent sorted spot."
+                    },
+                    {
+                        num: "4",
+                        title: "Early Exit Check",
+                        detail: "If a full pass occurs with 0 swaps, the array is already sorted, stopping early in optimal <strong>O(n)</strong> time."
+                    }
+                ],
+                complexityBadge: "O(n²) Average · O(n) Best",
+                ruleCode: "if (arr[j] > arr[j + 1]) swap(arr[j], arr[j + 1]);",
+                ruleExplanation: "Adjacent Comparison Rule: Whenever the left element exceeds the right element, their order is inverted, triggering a swap."
+            },
+
+            selection: {
+                title: "Selection Sort: How It Works",
+                icon: "🎯",
+                category: "Comparison Sort · In-Place · Unstable",
+                description: "Selection Sort divides the array into a sorted portion on the left and an unsorted portion on the right. In each pass, it scans the entire unsorted region to find the <strong>absolute minimum element</strong>, then makes exactly one swap to place it at the front of the unsorted segment.",
+                steps: [
+                    {
+                        num: "1",
+                        title: "Set Initial Minimum",
+                        detail: "Assume the first item of the unsorted section (index <code>i</code>) is the current minimum."
+                    },
+                    {
+                        num: "2",
+                        title: "Scan Unsorted Rest",
+                        detail: "Compare <code>arr[min]</code> with each remaining item <code>arr[j]</code>. If <code>arr[j] < arr[min]</code>, update <code>min = j</code>."
+                    },
+                    {
+                        num: "3",
+                        title: "Swap to Front",
+                        detail: "After scanning, perform a single swap between <code>arr[i]</code> and <code>arr[min]</code>. Index <code>i</code> is now permanently sorted."
+                    },
+                    {
+                        num: "4",
+                        title: "Advance Boundary",
+                        detail: "Move the sorted partition boundary one step to the right and repeat until the full array is sorted."
+                    }
+                ],
+                complexityBadge: "O(n²) Always · Exactly n Swaps",
+                ruleCode: "if (arr[j] < arr[min_idx]) min_idx = j; // swap once per pass",
+                ruleExplanation: "Minimum Search: Scans the remaining items to find the global minimum, requiring at most 1 swap per outer pass."
+            },
+
+            insertion: {
+                title: "Insertion Sort: How It Works",
+                icon: "🃏",
+                category: "Comparison Sort · In-Place · Stable · Adaptive",
+                description: "Insertion Sort builds the sorted array one element at a time, exactly like <strong>sorting playing cards in your hands</strong>. It picks the next element (the <code>key</code>), compares it backwards against already-sorted cards, shifts larger cards to the right, and drops the key into the newly opened gap.",
+                steps: [
+                    {
+                        num: "1",
+                        title: "Pick the Key",
+                        detail: "Select the next element <code>key = arr[i]</code> from the unsorted region."
+                    },
+                    {
+                        num: "2",
+                        title: "Compare Backwards",
+                        detail: "Walk backward through the sorted sub-array from index <code>j = i - 1</code> down to <code>0</code>, comparing with <code>key</code>."
+                    },
+                    {
+                        num: "3",
+                        title: "Shift Larger Items Right",
+                        detail: "While <code>arr[j] > key</code>, slide <code>arr[j]</code> one position right (<code>arr[j + 1] = arr[j]</code>) to make room."
+                    },
+                    {
+                        num: "4",
+                        title: "Insert into Gap",
+                        detail: "Place <code>key</code> into its correct sorted location at <code>arr[j + 1]</code>. The sorted sub-array grows by 1."
+                    }
+                ],
+                complexityBadge: "O(n²) Average · O(n) Best (Nearly Sorted)",
+                ruleCode: "while (j >= 0 && arr[j] > key) { arr[j + 1] = arr[j]; j--; } arr[j + 1] = key;",
+                ruleExplanation: "Shift & Insert: Elements larger than the key slide one slot to the right, creating the exact slot for insertion."
+            },
+
+            merge: {
+                title: "Merge Sort: How It Works",
+                icon: "⚡",
+                category: "Divide & Conquer · Out-of-Place · Stable",
+                description: "Merge Sort is an efficient, recursive <strong>Divide-and-Conquer</strong> algorithm. It continually halves the array until individual single-element arrays remain (which are inherently sorted), then systematically merges sorted halves back together in ascending order.",
+                steps: [
+                    {
+                        num: "1",
+                        title: "Divide into Halves",
+                        detail: "Find midpoint <code>mid = (low + high) / 2</code> and divide the array into left and right sub-arrays."
+                    },
+                    {
+                        num: "2",
+                        title: "Recursive Splitting",
+                        detail: "Recursively split until every sub-array has length <code><= 1</code> (the base case)."
+                    },
+                    {
+                        num: "3",
+                        title: "Compare & Merge",
+                        detail: "Compare the front items of both sorted halves; copy the smaller item into a temporary merged array."
+                    },
+                    {
+                        num: "4",
+                        title: "Write Back",
+                        detail: "Copy the combined sorted values back into the original array from position <code>low</code> to <code>high</code>."
+                    }
+                ],
+                complexityBadge: "O(n log n) Guaranteed · O(n) Space",
+                ruleCode: "if (left[i] <= right[j]) merged.push(left[i++]); else merged.push(right[j++]);",
+                ruleExplanation: "Two-Pointer Merge: Pointers track the heads of two sorted lists; the smaller element advances into the merged output."
+            },
+
+            quick: {
+                title: "Quick Sort: How It Works",
+                icon: "⚡",
+                category: "Divide & Conquer · In-Place · Unstable",
+                description: "Quick Sort selects a <strong>pivot element</strong> and partitions the array around it. All elements smaller than or equal to the pivot are relocated to its left, and all larger elements to its right. The pivot is then in its permanent spot, and the left and right sub-arrays are sorted recursively.",
+                steps: [
+                    {
+                        num: "1",
+                        title: "Choose a Pivot",
+                        detail: "Select a reference pivot value (here, the last element <code>arr[high]</code> of the subarray)."
+                    },
+                    {
+                        num: "2",
+                        title: "Partition Around Pivot",
+                        detail: "Scan items with pointer <code>j</code>. If <code>arr[j] <= pivot</code>, swap it with <code>arr[i]</code> to keep small items on the left."
+                    },
+                    {
+                        num: "3",
+                        title: "Lock Pivot in Place",
+                        detail: "Swap the pivot into index <code>i</code>. The pivot is now at its final sorted position!"
+                    },
+                    {
+                        num: "4",
+                        title: "Recurse on Partitions",
+                        detail: "Recursively apply Quick Sort to sub-array <code>[low..i - 1]</code> and <code>[i + 1..high]</code>."
+                    }
+                ],
+                complexityBadge: "O(n log n) Average · In-Place",
+                ruleCode: "if (arr[j] <= pivot) { swap(arr[i], arr[j]); i++; } // pivot placed at i",
+                ruleExplanation: "Partition Invariant: Elements <= pivot gather on the left; elements > pivot gather on the right."
+            },
+
+            counting: {
+                title: "Counting Sort: How It Works",
+                icon: "📊",
+                category: "Non-Comparison Sort · Integer Specific",
+                description: "Counting Sort does not compare elements against each other. Instead, it determines the minimum and maximum values, builds a <strong>frequency tally table</strong> for every distinct integer, and reconstructs the array in ascending sequence based on those counts.",
+                steps: [
+                    {
+                        num: "1",
+                        title: "Find Value Range",
+                        detail: "Scan the input array to determine the minimum (<code>min</code>) and maximum (<code>max</code>) values."
+                    },
+                    {
+                        num: "2",
+                        title: "Tally Frequencies",
+                        detail: "Create an array of zeros. For every element <code>x</code>, increment <code>count[x - min]</code> by 1."
+                    },
+                    {
+                        num: "3",
+                        title: "Inspect Counts",
+                        detail: "The count table indicates exactly how many times each number appears in the input."
+                    },
+                    {
+                        num: "4",
+                        title: "Reconstruct Array",
+                        detail: "Iterate through the count table and write each value back into the array in sorted order."
+                    }
+                ],
+                complexityBadge: "O(n + k) Linear Time · O(k) Space",
+                ruleCode: "count[val - min]++; // Write back: while (count[v]--) arr[k++] = v + min;",
+                ruleExplanation: "Direct Hashing: Maps each integer value directly to its frequency bucket, bypassing pairwise comparisons."
+            },
+
+            linear: {
+                title: "Linear Search: How It Works",
+                icon: "🔍",
+                category: "Sequential Search · Unsorted or Sorted",
+                description: "Linear Search is the most fundamental search algorithm. It inspects elements <strong>one by one from start to finish</strong> (index <code>0</code> to <code>n - 1</code>) until it finds a match with the search target or reaches the end of the array.",
+                steps: [
+                    {
+                        num: "1",
+                        title: "Start at Index 0",
+                        detail: "Begin at the very first element of the array."
+                    },
+                    {
+                        num: "2",
+                        title: "Compare with Target",
+                        detail: "Check if the current element <code>arr[i]</code> equals the search target."
+                    },
+                    {
+                        num: "3",
+                        title: "Target Found",
+                        detail: "If <code>arr[i] == target</code>, search immediately succeeds and highlights the matched element."
+                    },
+                    {
+                        num: "4",
+                        title: "Advance or Complete",
+                        detail: "If not matched, increment <code>i</code> by 1. If <code>i >= n</code>, target does not exist in the array."
+                    }
+                ],
+                complexityBadge: "O(n) Worst · O(1) Best · No Sorting Needed",
+                ruleCode: "if (arr[i] === target) return i; // Found! Else proceed to i + 1",
+                ruleExplanation: "Sequential Scan: Examines every item in order; works on any list regardless of sorting."
+            },
+
+            binary: {
+                title: "Binary Search: How It Works",
+                icon: "🎯",
+                category: "Logarithmic Search · Requires Sorted Array",
+                description: "Binary Search is an exceptionally fast search technique that operates on a <strong>pre-sorted array</strong>. It checks the middle element: if not matched, it eliminates the entire half where the target cannot possibly exist, halving the search space on every single step.",
+                steps: [
+                    {
+                        num: "1",
+                        title: "Ensure Array is Sorted",
+                        detail: "Binary Search requires sorted input. Set pointer bounds <code>left = 0</code>, <code>right = n - 1</code>."
+                    },
+                    {
+                        num: "2",
+                        title: "Check Middle Index",
+                        detail: "Compute <code>mid = floor((left + right) / 2)</code> and inspect value <code>arr[mid]</code>."
+                    },
+                    {
+                        num: "3",
+                        title: "Match Found",
+                        detail: "If <code>arr[mid] == target</code>, target is found in logarithmic time!"
+                    },
+                    {
+                        num: "4",
+                        title: "Discard Half",
+                        detail: "If <code>target > arr[mid]</code>, discard left half (<code>left = mid + 1</code>). If <code>target < arr[mid]</code>, discard right half (<code>right = mid - 1</code>)."
+                    }
+                ],
+                complexityBadge: "O(log n) Fast · Requires Sorted Array",
+                ruleCode: "if (arr[mid] === target) return mid; else if (target > arr[mid]) left = mid + 1; else right = mid - 1;",
+                ruleExplanation: "Halving Search Space: Each comparison eliminates 50% of the remaining candidates."
+            }
+        };
+
+        function updateAlgorithmGuide(algo) {
+            const data = ALGO_GUIDE_DATA[algo] || ALGO_GUIDE_DATA.bubble;
+
+            const iconEl = $("guideIcon");
+            const badgeEl = $("guideCategoryBadge");
+            const titleEl = $("guideTitle");
+            const descEl = $("guideDescription");
+            const gridEl = $("guideStepsGrid");
+            const compEl = $("guideComplexityBadge");
+            const ruleCodeEl = $("guideRuleCode");
+            const ruleExplEl = $("guideRuleExplanation");
+
+            if (iconEl) iconEl.textContent = data.icon;
+            if (badgeEl) badgeEl.textContent = data.category;
+            if (titleEl) titleEl.textContent = data.title;
+            if (descEl) descEl.innerHTML = data.description;
+            if (compEl) compEl.textContent = data.complexityBadge;
+            if (ruleCodeEl) ruleCodeEl.textContent = data.ruleCode;
+            if (ruleExplEl) ruleExplEl.textContent = data.ruleExplanation;
+
+            if (gridEl && Array.isArray(data.steps)) {
+                gridEl.innerHTML = data.steps.map((st) => `
+                    <div class="guide-step-card">
+                        <span class="guide-step-num">${st.num}</span>
+                        <h5 class="guide-step-title">${st.title}</h5>
+                        <p class="guide-step-detail">${st.detail}</p>
+                    </div>
+                `).join("");
+            }
+        }
+
+        function toggleGuide() {
+            const body = $("guideBody");
+            const text = $("guideToggleText");
+            const arrow = $("guideToggleArrow");
+            if (!body) return;
+
+            if (body.style.display === "none") {
+                body.style.display = "block";
+                if (text) text.textContent = "Hide Process";
+                if (arrow) arrow.textContent = "▲";
+            } else {
+                body.style.display = "none";
+                if (text) text.textContent = "Show Process";
+                if (arrow) arrow.textContent = "▼";
+            }
+        }
+
+        // --------------------------------------------------
+        // EVENT LISTENERS
+        // --------------------------------------------------
+        algorithmSelect.addEventListener("change", () => {
+            updateTargetVisibility();
+            const algo = algorithmSelect.value;
+            updateAlgorithmGuide(algo);
+
+            lastSnippets = {
+                python: PYTHON_SNIPPETS[algo] || "",
+                java: JAVA_SNIPPETS[algo] || "",
+                cpp: CPP_SNIPPETS[algo] || ""
+            };
+            updateCodeOutputView();
+            const comp = COMPLEXITIES[algo] || { time: "—", space: "—" };
+            timeOutput.textContent = comp.time;
+            spaceOutput.textContent = comp.space;
+        });
+
+        runBtn.addEventListener("click", runAlgorithm);
+        stopBtn.addEventListener("click", stopRun);
+        randomBtn.addEventListener("click", generateRandomArray);
+
+        arrayInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" && !isRunning) {
+                runAlgorithm();
+            }
+        });
+
+        // --------------------------------------------------
+        // INITIALIZE THE PAGE
+        // --------------------------------------------------
+        try {
+            currentArray = parseArray();
+            drawBars(currentArray);
+        } catch {
+            currentArray = [45, 12, 78, 23, 9];
+            drawBars(currentArray);
+        }
+
+        updateTargetVisibility();
+        resetStepHistory();
+        setStatus("Ready");
+        updateAlgorithmGuide("bubble");
+
+        // Initial preview snippets
+        lastSnippets = {
+            python: PYTHON_SNIPPETS.bubble,
+            java: JAVA_SNIPPETS.bubble,
+            cpp: CPP_SNIPPETS.bubble
+        };
+        updateCodeOutputView();
+        timeOutput.textContent = COMPLEXITIES.bubble.time;
+        spaceOutput.textContent = COMPLEXITIES.bubble.space;
+    </script>
+</body>
+</html>
