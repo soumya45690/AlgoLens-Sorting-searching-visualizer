@@ -794,7 +794,7 @@ def index():
     return render_template("index.html")
 
 
-@app.post("/api/run")
+@app.post("/api/run")                                 
 def run_algorithm():
     data = request.get_json(silent=True) or {}
 
